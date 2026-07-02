@@ -17,6 +17,11 @@ class turtle_controller : public rclcpp::Node {
 public:
     turtle_controller() : Node("controller_node") {
 
+        //PARAMETRES
+        this->declare_parameter("closest_first", true);
+        closest_turtle_first_ = this->get_parameter("closest_first").as_bool();
+        
+        
         //recuperer la position de notre tortue principale avec le service /turtle1/pose
         turtle1_pose_sub_ = this->create_subscription<turtlesim::msg::Pose>(
             "/turtle1/pose", 10, 
@@ -54,11 +59,33 @@ private:
     }
 
     /**
-     * @brief mise a jour de la tortue cible a partir de la liste
+     * @brief mise a jour de la tortue cible a partir de la liste (trouve la plus proche) ou (par ordre de spawn)
      */
     void alive_callback(const my_interfaces_pkg::msg::TurtleListe::SharedPtr msg) {
         if (!msg->turtles.empty()) {
-            this->turtle_target_ = msg->turtles[0]; 
+
+            //on cherche la tortue la plus proche
+            if(closest_turtle_first_){
+                min_distance = 10000;
+                for(size_t i = 0; i < msg->turtles.size(); i++){
+                    dist_x = msg->turtles[i].x - this->pose_.x;
+                    dist_y = msg->turtles[i].y - this->pose_.y;
+                    distance = std::sqrt((dist_x * dist_x) + (dist_y * dist_y));
+
+                    if(distance<min_distance){
+                        min_distance = distance;
+                        closest_target_ = msg->turtles[i];
+                    }
+                }
+                this->turtle_target_ = closest_target_;
+
+            }
+            //on cherche les tortues par ordre de spawn
+            else{
+                this->turtle_target_ = msg->turtles[0];
+            }
+
+             
         } else {
             this->turtle_target_.name = ""; 
         }
@@ -145,11 +172,16 @@ private:
     rclcpp::TimerBase::SharedPtr timer_;
 
     // Variables de contrôle
-    turtlesim::msg::Pose pose_;
+    turtlesim::msg::Pose pose_; //position de la main tortue
     bool pose_received_ = false;
-    my_interfaces_pkg::msg::Turtle turtle_target_;
 
+    my_interfaces_pkg::msg::Turtle turtle_target_; //tortue cible
+    my_interfaces_pkg::msg::Turtle closest_target_;
+
+    bool closest_turtle_first_; //pour activer le mode "chercher la plus proche"
+    
     double distance;
+    double min_distance;
     float target_angle;
     float angle_diff;
     float dist_x;

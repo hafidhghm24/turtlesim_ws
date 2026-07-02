@@ -16,13 +16,21 @@ using namespace std::placeholders;
 
 class turtle_spawner : public rclcpp::Node {
 public:
-    turtle_spawner() : Node("alive_node"), turtle_name_prefix_("turtle"), turtle_compteur(0) {
+    turtle_spawner() : Node("alive_node"), turtle_compteur(0) {
+
+        //PARAMETERS
+        this->declare_parameter("spawn_frequency", 1.0);
+        spawn_frequency_ = this->get_parameter("spawn_frequency").as_double();
+        this->declare_parameter("turtle_name", "turtle");
+        turtle_name_prefix_ = this->get_parameter("turtle_name").as_string();
+
         //client qui va appeler le service /spawn pour faire aparaitre une tortue
         turtle_client_ = this->create_client<turtlesim::srv::Spawn>("/spawn");
         RCLCPP_WARN(this->get_logger(), "Creation du client turtle_spawner => /spawn");
 
         //toute les 2sec apelle de la fonction random_arguments_spawn
-        timer_ = this->create_wall_timer(2s, std::bind(&turtle_spawner::random_arguments_spawn, this));
+        timer_ = this->create_wall_timer(std::chrono::milliseconds((int)((1.0/spawn_frequency_)*1000.0)), std::bind(&turtle_spawner::random_arguments_spawn, this));
+        RCLCPP_INFO(this->get_logger(), "frequence de spawn = %d", (int)((1.0/spawn_frequency_)*1000.0));
 
         //pour envoie de la liste des tortue
         turtle_pub_ = this->create_publisher<my_interfaces_pkg::msg::TurtleListe>("alive_turtles", 10);
@@ -176,6 +184,7 @@ private:
 
     std::string turtle_name_prefix_;
     int turtle_compteur;
+    double spawn_frequency_;
 };
 
 int main(int argc, char **argv) {

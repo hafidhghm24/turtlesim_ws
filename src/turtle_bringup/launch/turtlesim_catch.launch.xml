@@ -1,0 +1,9 @@
+<launch>
+    <node pkg="turtlesim" exec ="turtlesim_node"/>
+    <node pkg="turtlesim_cpp_pkg" exec ="alive_exec">
+        <param from="$(find-pkg-share turtle_bringup)/config/catch_turtle_config.yaml"/>
+    </node>
+    <node pkg="turtlesim_cpp_pkg" exec ="turtle1_exec">
+        <param from="$(find-pkg-share turtle_bringup)/config/catch_turtle_config.yaml"/>
+    </node>
+</launch>

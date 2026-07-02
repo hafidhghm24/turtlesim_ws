@@ -1,0 +1,9 @@
+/controller_node:
+  ros__parameters:
+    closest_first: True
+
+/alive_node:
+  ros__parameters:
+    spawn_frequency: 2.0
+    turtle_name: "turtle"
+    
